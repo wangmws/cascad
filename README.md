@@ -1,7 +1,7 @@
 bluemix-hello-node
 ================================================================================
 
-A "Hello World" server in node.js sample for Bluemix.
+Aa "Hello World" server in node.js sample for Bluemix.
 
 This repo contains a complete sample of a node.js program that you can deploy
 on IBM's [Bluemix](https://bluemix.net/) PaaS, which is based on
