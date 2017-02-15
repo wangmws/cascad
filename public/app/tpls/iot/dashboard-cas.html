@@ -1,0 +1,952 @@
+
+<page-title ng-if="layoutOptions.pageTitles" title="Cascademic" description=""></page-title>
+<div class="dx-warning hidden">
+	<div>
+		<h2>How to Include Charts Library in Xenon Theme</h2>
+
+		<p>The reason why you don't see charts like in the Xenon demo website is because of license restrictions from DevExpress company. <a href="http://js.devexpress.com/DevExtremeWeb/?folder=EULAs" target="_blank">Click here</a> to read license agreement.</p>
+		<p>Even that we have purchased the developer license we are not permitted to include the DevExtreme Web Charts JavaScript library in the default download file of Xenon theme, however you can include DevExpress Charts library manually and takes just few minutes:</p>
+
+		<ol>
+			<li>Download <strong>DevExtreme Web</strong> JavaScript library by clicking <a href="https://go.devexpress.com/DevExpressDownload_DevExtremeWebTrial.aspx" class="text-bold">here</a>. If the link doesn't work, then <a href="http://js.devexpress.com/Buy/" target="_parent"><strong>click this one</strong></a> and choose DevExtreme Web package to download.</li>
+			<li>Extract the downloaded archive. There you will find <strong>Lib/</strong> folder. <strong>Copy</strong> the folders inside.</li>
+			<li><strong>Paste</strong> copied files to <strong>assets/js/devexpress-web-14.1/</strong></li>
+			<li>You are all set! Charts will look the same just like in the demo website.</li>
+		</ol>
+	</div>
+</div>
+<script src="/scripts/canvas-gauges/gauge.min.js"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			$(".dx-warning").removeClass('hidden');
+	});
+</script>
+
+<script type="text/javascript">
+
+	var types = ["spline", "stackedSpline", "fullStackedSpline"];
+	
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+		/*	
+		var dataSource = [
+			{ year: 2040, europe: 680, americas: 1178, africa: 1665 },
+			{ year: 2050, europe: 650, americas: 1231, africa: 1937 }
+		];
+		*/
+		$("#bar-3").dxChart({
+			commonSeriesSettings: {
+				type: types[0],
+				argumentField: "time"
+			},
+			series: [
+				{ valueField: "Temperature", name: "Temperature", color: "#40bbea" },
+				{ valueField: "Humidity", name: "Humidity", color: "#8dc63f" },
+				{ valueField: "Presence", name: "Presence", color: "#cc3f44" }
+			],
+			argumentAxis:{
+				grid:{
+					visible: true
+				}
+			},
+			tooltip:{
+				enabled: true
+			},
+			title: "Temperature, Humidity, Presence Trends",
+			legend: {
+				verticalAlignment: "bottom",
+				horizontalAlignment: "center"
+			},
+			commonPaneSettings: {
+				border:{
+					visible: true,
+					right: false
+				}	   
+			}
+		});
+	});
+</script>
+
+<script type="text/javascript">
+	var sample_notification;
+
+	var sensorObj_current;
+	var sensor_counter = 0;
+	
+	//get current sensor reading
+	
+	var Avg_linevoltage_current = 0;
+	var kW_TOTAL_current = 0;
+	var PF_current = 0;
+	var freq_current = 0;
+	var Avg_linecurrent_current = 0;
+	var timestamp_current;
+
+	var sensorlight_current = 0.0;
+	var sensorTemperature_current = 0.0;
+	var sensorHumidity_current = 0.0;
+	var sensorMotion_current = 0;
+	
+
+	/* Test HTTP Get
+	$.get('https://cors-anywhere.herokuapp.com/http://iotwmw.mybluemix.net/test',{x1 : "10"}).done(function(data){
+		console.log(data);
+	});
+	*/
+
+	var socket_current = io.connect();
+	socket_current.on("sensorObj", function(sensorObj) { 
+		sensorObj_current = sensorObj;
+		//console.log(sensorObj);
+		
+		
+		if(!(sensorObj.d.Avg_linevoltage === undefined)){
+			Avg_linevoltage_current = sensorObj.d.Avg_linevoltage;
+			//console.log(Avg_linevoltage_current);
+		}
+
+		if(!(sensorObj.d.kW_TOTAL === undefined))
+			kW_TOTAL_current = sensorObj.d.kW_TOTAL;
+
+		if(!(sensorObj.d.PF === undefined))
+			PF_current = sensorObj.d.PF;
+
+		if(!(sensorObj.d.freq === undefined))
+			freq_current = sensorObj.d.freq;
+
+		if(!(sensorObj.d.Avg_linecurrent === undefined))
+			Avg_linecurrent_current = sensorObj.d.Avg_linecurrent;
+
+		timestamp_current = sensorObj.d.Timestamp.slice(11,19);
+		//console.log(timestamp_current);
+	
+	});
+
+	
+		setTimeout(function()
+		{	
+		var $ = jQuery;		
+		// Notifications
+		window.clearTimeout(sample_notification);
+		
+		var notification = setTimeout(function()
+		{			
+			var opts = {
+				"closeButton": true,
+				"debug": false,
+				"positionClass": "toast-top-right toast-default",
+				"toastClass": "black",
+				"onclick": null,
+				"showDuration": "100",
+				"hideDuration": "1000",
+				"timeOut": "5000",
+				"extendedTimeOut": "1000",
+				"showEasing": "swing",
+				"hideEasing": "linear",
+				"showMethod": "fadeIn",
+				"hideMethod": "fadeOut"
+			};
+	
+			toastr.info("Enjoy the Dashboard.", "Welcome to Cascademic Dashboard", opts);
+		}, 3800);
+		
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+		
+		// Charts
+		var xenonPalette = ['#68b828','#7c38bc','#0e62c7','#fcd036','#4fcdfc','#00b19d','#ff6264','#f7aa47'];
+		
+		
+		
+		// Realtime Network Stats
+		var i = 0,
+			rns_values = [60,80],
+			rns2_values = [39,50],
+			realtime_network_stats = [];
+		
+		
+		
+		var socket_array = io.connect();
+		socket_array.on("sensorObj_array", function(sensorObj_array) { 
+			//console.log("sensorObj_array");
+			//console.log(sensorObj_array);
+			if(Array.isArray(sensorObj_array)){
+
+				var chart_data = new Array();
+				var temp_sum = 0;
+				var humid_sum = 0;
+				
+				for(i=0; i< sensorObj_array.length; i++)
+				{	
+					//Update light chart
+					var tempJson = JSON.parse(JSON.stringify(sensorObj_array[i]));
+					var timestamp = tempJson.PAYLOAD_TS.slice(11,16);
+					realtime_network_stats.push({ time: timestamp, x1: parseInt(tempJson.PAYLOAD_D_LIGHT) });
+					if (i != 0)
+						sensor_counter++;
+
+					var motion = 0;
+					if(tempJson.PAYLOAD_D_MOTION == 1)
+						motion = 100;
+
+					if(!isNaN(tempJson.PAYLOAD_D_TEMPERATURE)){
+						chart_data.push({time: timestamp, Temperature : tempJson.PAYLOAD_D_TEMPERATURE, 
+								Humidity : tempJson.PAYLOAD_D_HUMIDITY, Presence : motion });
+					}
+					//{ year: 1950, europe: 546, americas: 332, africa: 227 }
+					sensor_counter++;
+
+					temp_sum += parseFloat(tempJson.PAYLOAD_D_TEMPERATURE);
+					humid_sum += parseFloat(tempJson.PAYLOAD_D_HUMIDITY);
+				}
+				$("#bar-3").dxChart('instance').option('dataSource', chart_data);
+				$('#realtime-network-stats').dxChart('instance').option('dataSource', realtime_network_stats);
+				$('.sparkline_temp').dxSparkline('instance').option('dataSource', sensorObj_array);
+				$('.sparkline_humid').dxSparkline('instance').option('dataSource', sensorObj_array);
+				$('#temp_chart_avg')[0].innerText = Math.round(temp_sum / sensorObj_array.length * 100) / 100 + '\xB0';
+				$('#humid_chart_avg')[0].innerText = Math.round(humid_sum / sensorObj_array.length * 100) / 100 + '%';
+			}
+		
+		});
+		
+		/*
+		for(i=0; i<=100; i++)
+		{
+			realtime_network_stats.push({ id: i, x1: between(rns_values[0], rns_values[1])});
+		}
+		*/
+
+		
+		$("#realtime-network-stats").dxChart({
+			commonSeriesSettings: {
+				type: "area",
+				argumentField: "time"
+			},
+			series: [
+				{ valueField: "x1", name: "LUX", color: '#7c38bc', opacity: .4 },
+			],
+			legend: {
+				verticalAlignment: "bottom",
+				horizontalAlignment: "center"
+			},
+			commonAxisSettings: {
+				label: {
+					visible: true
+				},
+				grid: {
+					visible: true,
+					color: '#f5f5f5'
+				}
+			},
+			legend: {
+				visible: false
+			},
+			argumentAxis: {
+		        valueMarginsEnabled: false
+		    },
+			valueAxis: {
+				max: 3000
+			},
+			animation: {
+				enabled: false
+			}
+		}).data('iCount', i);
+
+		$('#network-realtime-gauge').dxCircularGauge({
+			scale: {
+				startValue: 0,
+				endValue: 2000,
+				majorTick: {
+					tickInterval: 50
+				}
+			},
+			rangeContainer: {
+				palette: 'pastel',
+				width: 3,
+				ranges: [
+					{ startValue: 0, endValue: 500, color: "#7c38bc" },
+					{ startValue: 500, endValue: 1000, color: "#7c38bc" },
+					{ startValue: 1000, endValue: 1500, color: "#7c38bc" },
+					{ startValue: 1500, endValue: 2000, color: "#7c38bc" },
+				],
+			},
+			value: 0,
+			valueIndicator: {
+				offset: 10,
+				color: '#7c38bc',
+				type: 'triangleNeedle',
+				spindleSize: 12
+			}
+		});
+		
+		setInterval(function(){ networkRealtimeChartTick(); }, 600000);
+		setInterval(function(){ networkRealtimeGaugeTick(); }, 2000);
+		setInterval(function(){ networkRealtimeMBupdate(); }, 2000);
+		
+		setInterval(function(){ KW_TOTALGaugeUpdate(); }, 2000);
+		setInterval(function(){ PFGaugeUpdate(); }, 2000);
+		setInterval(function(){ freqGaugeUpdate(); }, 2000);
+		setInterval(function(){ AvgCurrentGaugeUpdate(); }, 2000);
+		setInterval(function(){ AvglinevoltGaugeUpdate(); }, 2000);
+		
+
+
+		setInterval(function(){ MotionTextUpdate(); }, 2000);
+		setInterval(function(){ bar3ChartUpdate(); }, 600000);
+		setInterval(function(){ presence_avgUpdate(); }, 2000);
+
+		function KW_TOTALGaugeUpdate(){
+			document.gauges[0].value = kW_TOTAL_current;
+			jQuery("#motionText").textContent = 1000;
+		}
+
+		function PFGaugeUpdate(){
+			document.gauges[1].value = PF_current;
+		}
+
+		function freqGaugeUpdate(){
+			document.gauges[2].value = freq_current;
+			$.get(window.location.origin + '/test',"").done(function(data){
+				console.log(data);
+			});
+		}
+
+		function AvgCurrentGaugeUpdate(){
+			document.gauges[3].value = Avg_linecurrent_current;
+		}
+
+		function AvglinevoltGaugeUpdate(){
+			document.gauges[4].value = Avg_linevoltage_current;
+		}
+		
+		function MotionTextUpdate(){
+			if(sensorMotion_current == 0)
+				jQuery("#motionText")[0].innerText = "Emtpy";
+			else
+				jQuery("#motionText")[0].innerText = "People Around";
+		}
+
+		function presence_avgUpdate(){
+			if(typeof $("#bar-3").dxChart('instance').option('dataSource') !== 'undefined'){
+				var chart_data = $("#bar-3").dxChart('instance').option('dataSource');
+				var counter = 0;
+				var motionCount = 0;
+
+				//console.log(chart_data[0].Presence);
+
+			
+				for(counter=0; counter< chart_data.length; counter++){
+					//console.log(chart_data[counter].Presence);
+					if(chart_data[counter].Presence == 100)
+						motionCount++;
+				}
+
+				jQuery("#presence_avg")[0].textContent = Math.round(motionCount / chart_data.length * 100 * 100)/100 + "%";
+			}
+		}
+		
+		
+		
+		// Resize charts
+		$(window).on('xenon.resize', function()
+		{
+			$("#pageviews-visitors-chart").data("dxChart").render();
+			$("#server-uptime-chart").data("dxChart").render();
+			$("#realtime-network-stats").data("dxChart").render();
+			
+			$('.first-month').data("dxSparkline").render();
+			$('.second-month').data("dxSparkline").render();
+			$('.third-month').data("dxSparkline").render();
+		});
+		
+	});
+	
+	function bar3ChartUpdate()
+	{
+		if(!isNaN(sensorObj_current.d.Temperature)){
+			var chart_data = $("#bar-3").dxChart('instance').option('dataSource');
+			
+			if(chart_data.length >= 100)
+				chart_data.shift();
+			
+			var motion = 0;
+			if(sensorMotion_current == 1)
+				motion = 100;
+			
+		
+			chart_data.push({time: timestamp_current, Temperature : sensorTemperature_current, 
+								Humidity : sensorHumidity_current, Presence : motion });
+
+			$("#bar-3").dxChart('instance').option('dataSource', chart_data);
+		}
+	}
+
+	
+	function networkRealtimeChartTick()
+	{
+		var $ = jQuery,
+			i = 0;
+		
+		if( $('#realtime-network-stats').length == 0 )
+			return;
+		
+		var chart_data = $('#realtime-network-stats').dxChart('instance').option('dataSource');
+		var count = $('#realtime-network-stats').data('iCount');
+		
+		$('#realtime-network-stats').data('iCount', count + 1);
+		
+		if(chart_data.length >= 100)
+			chart_data.shift();
+		chart_data.push({time: timestamp_current, x1: sensorlight_current });
+		sensor_counter++;
+		$('#realtime-network-stats').dxChart('instance').option('dataSource', chart_data);
+	}
+	
+	function networkRealtimeGaugeTick()
+	{
+		if(jQuery('#network-realtime-gauge').length == 0)
+			return;
+			
+		var nr_gauge = jQuery('#network-realtime-gauge').dxCircularGauge('instance');
+		
+		nr_gauge.value( sensorlight_current );
+		
+	}
+	
+	function networkRealtimeMBupdate()
+	{
+		var $el = jQuery("#network-mbs-packets");
+		
+			
+		if($el.length == 0)
+			return;
+			
+		var options = {
+				useEasing : true, 
+				useGrouping : true, 
+				separator : ',', 
+				decimal : '.', 
+				prefix : '' ,
+				suffix : 'LUX' 
+			},
+			cntr = new countUp($el[0], parseFloat($el.text().replace('LUX')), sensorlight_current, 2, 1.5, options);
+			
+		cntr.start();
+		
+	}
+	
+	function between(randNumMin, randNumMax)
+	{
+		var randInt = Math.floor((Math.random() * ((randNumMax + 1) - randNumMin)) + randNumMin);
+		
+		return randInt;
+	}
+
+	
+</script>
+
+<div class="row">
+	<div class="col-sm-6">
+		<canvas 
+			id="KW_TOTALGauge"
+			data-title="KW Total"
+			data-type="radial-gauge"
+			data-width="200"
+			data-height="200"
+			data-units="KW"
+			data-min-value="10"
+			data-max-value="40"
+			data-major-ticks="10,20,30,40"
+			data-minor-ticks="2"
+			data-stroke-ticks="true"
+			data-highlights='[
+				{"from": 10, "to": 20, "color": "rgba(200, 50, 50, .75)"},
+				{"from": 35, "to": 40, "color": "rgba(200, 50, 50, .75)"}
+			]'
+			data-color-plate="#fff"
+			data-border-shadow-width="0"
+			data-borders="false"
+			data-needle-type="arrow"
+			data-needle-width="2"
+			data-needle-circle-size="7"
+			data-needle-circle-outer="true"
+			data-needle-circle-inner="false"
+			data-animation-duration="1500"
+			data-animation-rule="cycle"
+		></canvas>
+		
+		
+		<canvas 
+			id="PFGauge"
+			data-title="PF"
+			data-type="radial-gauge"
+			data-width="200"
+			data-height="200"
+			data-units=""
+			data-min-value="0"
+			data-max-value="100"
+			data-major-ticks="0,25,50,75,100"
+			data-minor-ticks="2"
+			data-stroke-ticks="true"
+			data-highlights='[
+				{"from": 0, "to": 20, "color": "rgba(200, 50, 50, .75)"},
+				{"from": 20, "to": 40, "color": "yellow"},
+				{"from": 90, "to": 100, "color": "yellow"}
+			]'
+			data-color-plate="#fff"
+			data-border-shadow-width="0"
+			data-borders="false"
+			data-needle-type="arrow"
+			data-needle-width="2"
+			data-needle-circle-size="7"
+			data-needle-circle-outer="true"
+			data-needle-circle-inner="false"
+			data-animation-duration="1500"
+			data-animation-rule="cycle"
+		></canvas>
+		
+		
+		<canvas 
+			id="freqGauge"
+			data-title="Frequency"
+			data-type="radial-gauge"
+			data-width="200"
+			data-height="200"
+			data-units=""
+			data-min-value="0"
+			data-max-value="2000"
+			data-major-ticks="0,500,1000,1500,2000"
+			data-minor-ticks="2"
+			data-stroke-ticks="true"
+			data-highlights='[
+				{"from": 0, "to": 30, "color": "yellow"},
+				{"from": 1000, "to": 1500, "color": "yellow"},
+				{"from": 1500, "to": 2000, "color": "rgba(200, 50, 50, .75)"}
+			]'
+			data-color-plate="#fff"
+			data-border-shadow-width="0"
+			data-borders="false"
+			data-needle-type="arrow"
+			data-needle-width="2"
+			data-needle-circle-size="7"
+			data-needle-circle-outer="true"
+			data-needle-circle-inner="false"
+			data-animation-duration="1500"
+			data-animation-rule="cycle"
+		></canvas>
+
+		<canvas 
+			id="AvglinecurrentGauge"
+			data-title="Avg Line Current"
+			data-type="radial-gauge"
+			data-width="200"
+			data-height="200"
+			data-units=""
+			data-min-value="0"
+			data-max-value="2000"
+			data-major-ticks="0,500,1000,1500,2000"
+			data-minor-ticks="2"
+			data-stroke-ticks="true"
+			data-highlights='[
+				{"from": 0, "to": 30, "color": "yellow"},
+				{"from": 1000, "to": 1500, "color": "yellow"},
+				{"from": 1500, "to": 2000, "color": "rgba(200, 50, 50, .75)"}
+			]'
+			data-color-plate="#fff"
+			data-border-shadow-width="0"
+			data-borders="false"
+			data-needle-type="arrow"
+			data-needle-width="2"
+			data-needle-circle-size="7"
+			data-needle-circle-outer="true"
+			data-needle-circle-inner="false"
+			data-animation-duration="1500"
+			data-animation-rule="cycle"
+		></canvas>
+
+		<canvas 
+			id="AvglinevoltGauge"
+			data-title="Avg Line Voltage"
+			data-type="radial-gauge"
+			data-width="200"
+			data-height="200"
+			data-units=""
+			data-min-value="0"
+			data-max-value="2000"
+			data-major-ticks="0,500,1000,1500,2000"
+			data-minor-ticks="2"
+			data-stroke-ticks="true"
+			data-highlights='[
+				{"from": 0, "to": 30, "color": "yellow"},
+				{"from": 1000, "to": 1500, "color": "yellow"},
+				{"from": 1500, "to": 2000, "color": "rgba(200, 50, 50, .75)"}
+			]'
+			data-color-plate="#fff"
+			data-border-shadow-width="0"
+			data-borders="false"
+			data-needle-type="arrow"
+			data-needle-width="2"
+			data-needle-circle-size="7"
+			data-needle-circle-outer="true"
+			data-needle-circle-inner="false"
+			data-animation-duration="1500"
+			data-animation-rule="cycle"
+		></canvas>
+		
+		
+	</div>
+	<div class="col-sm-3">
+		<div>&nbsp;</div>
+		<div class="xe-widget xe-counter-block xe-counter-block-blue" >
+			<div class="xe-upper">
+				
+				<div class="xe-icon">
+					<i class="linecons-user"></i>
+				</div>
+				<div class="xe-label">
+					<strong id="motionText" >--</strong>
+					<span>Presence</span>
+				</div>
+				
+			</div>
+			<div class="xe-lower">
+				<div class="border"></div>
+				
+				<span>Occpancy</span>
+				<strong id="presence_avg">--%</strong>
+			</div>
+		</div>
+		
+	</div>
+	
+</div>
+
+
+<div class="row">
+	<div class="col-sm-6">
+	
+		<div class="panel panel-default">
+			<div class="panel-body">	
+				
+				<div id="bar-3" style="height: 400px; width: 80%;"></div>
+			</div>
+		</div>
+
+<script>
+//{ valueField: "Temperature", name: "Temperature", color: "#40bbea" },
+//{ valueField: "Humidity", name: "Humidity", color: "#8dc63f" },
+
+	// Sparklines
+	var temp_day_chart = {
+		argumentField: 'PAYLOAD_TS',
+		valueField: 'PAYLOAD_D_TEMPERATURE',
+		type: 'splinearea',
+		showMinMax: true,
+		lineColor: '#40bbea',
+		minColor: '#4fcdfc',
+		maxColor: '#d5080f',
+		showFirstLast: true
+	},
+	humid_day_chart = {
+		argumentField: 'PAYLOAD_TS',
+		valueField: 'PAYLOAD_D_HUMIDITY',
+		type: 'splinearea',
+		//lineWidth: 3,
+		lineColor: '#8dc63f',
+		minColor: '#4fcdfc',
+		maxColor: '#d5080f',
+		showMinMax: true,
+		showFirstLast: true
+	};
+
+
+
+		$('.sparkline_temp').dxSparkline(temp_day_chart);
+		$('.sparkline_humid').dxSparkline(humid_day_chart);
+</script>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">This Daily Analytics</div>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Type</th>
+						<th width="20%">Avg</th>
+						<th width="50%">Daily Chart</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Temperature</td>
+						<td id="temp_chart_avg">--&deg;</td>
+						<td>
+							<div class="sparkline_temp"></div>
+						</td>
+					</tr>
+					<tr>
+						<td>Humidity</td>
+						<td id="humid_chart_avg">--%</td>
+						<td>
+							<div class="sparkline_humid"></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+			
+	</div>
+	<div class="col-sm-6">
+		
+		<div class="chart-item-bg">
+			<div class="chart-label">
+				<div id="network-mbs-packets" class="h1 text-purple text-bold" xe-counter data-count="this" data-from="0.00" data-to="0.00" data-suffix="LUX" data-duration="1">0.00LUX</div>
+				<span class="text-small text-muted text-upper">Light</span>
+			</div>
+			<div class="chart-right-legend">
+				<div id="network-realtime-gauge" style="width: 170px; height: 140px"></div>
+			</div>
+			<div id="realtime-network-stats" style="height: 320px"></div>
+		</div>
+<script>
+	var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+ 	var c_date = new Date();
+ 	var c_date_text = "Today , " + c_date.getDate() + ' ' + months[c_date.getMonth()];
+ 	$('#current_date')[0].innerText = c_date_text;
+
+</script>
+		<div class="xe-widget xe-weather">
+			<div class="xe-background xe-background-animated">
+				<img src="assets/images/clouds.png" />
+			</div>
+			
+			<div class="xe-current-day">
+				<div class="xe-now">
+					<div class="xe-temperature">
+						<div class="xe-icon">
+							<i class="meteocons-cloud-moon"></i>
+						</div>
+						<div class="xe-label">
+							Now
+							<strong>30&deg;</strong>
+						</div>
+					</div>
+					<div class="xe-location">
+						<h4>Singapore</h4>
+						<time id="current_date"></time>
+					</div>
+				</div>
+				
+				<div class="xe-forecast">
+					<ul>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>11:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-sunrise"></i>
+								</div>
+								<strong class="xe-temp">28&deg;</strong>
+							</div>
+						</li>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>12:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-clouds-flash"></i>
+								</div>
+								<strong class="xe-temp">30&deg;</strong>
+							</div>
+						</li>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>13:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-cloud-moon-inv"></i>
+								</div>
+								<strong class="xe-temp">31&deg;</strong>
+							</div>
+						</li>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>14:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-eclipse"></i>
+								</div>
+								<strong class="xe-temp">31&deg;</strong>
+							</div>
+						</li>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>15:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-rain"></i>
+								</div>
+								<strong class="xe-temp">30&deg;</strong>
+							</div>
+						</li>
+						<li>
+							<div class="xe-forecast-entry">
+								<time>16:00</time>
+								<div class="xe-icon">
+									<i class="meteocons-cloud-sun"></i>
+								</div>
+								<strong class="xe-temp">28&deg;</strong>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+			
+			<div class="xe-weekdays">
+				<ul class="list-unstyled">
+					<li>
+						<div class="xe-weekday-forecast">
+							<div class="xe-temp">30&deg;</div>
+							<div class="xe-day">Monday</div>
+							<div class="xe-icon">
+								<i class="meteocons-windy-inv"></i>
+							</div>
+						</div>
+					</li>
+					<li>
+						<div class="xe-weekday-forecast">
+							<div class="xe-temp">32&deg;</div>
+							<div class="xe-day">Tuesday</div>
+							<div class="xe-icon">
+								<i class="meteocons-sun"></i>
+							</div>
+						</div>
+					</li>
+					<li>
+						<div class="xe-weekday-forecast">
+							<div class="xe-temp">30&deg;</div>
+							<div class="xe-day">Wednesday</div>
+							<div class="xe-icon">
+								<i class="meteocons-na"></i>
+							</div>
+						</div>
+					</li>
+					<li>
+						<div class="xe-weekday-forecast">
+							<div class="xe-temp">31&deg;</div>
+							<div class="xe-day">Thursday</div>
+							<div class="xe-icon">
+								<i class="meteocons-windy"></i>
+							</div>
+						</div>
+					</li>
+					<li>
+						<div class="xe-weekday-forecast">
+							<div class="xe-temp">30&deg;</div>
+							<div class="xe-day">Friday</div>
+							<div class="xe-icon">
+								<i class="meteocons-sun"></i>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</div>
+			
+		</div>
+		<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Room Occupancy Weekly Chart</h3>
+					<div class="panel-options">
+						<a href="" data-toggle="panel">
+							<span class="collapse-icon">&ndash;</span>
+							<span class="expand-icon">+</span>
+						</a>
+						<a href="" data-toggle="remove">
+							&times;
+						</a>
+					</div>
+				</div>
+				<div class="panel-body">	
+				<script type="text/javascript">
+					jQuery(document).ready(function($)
+					{
+						if( ! $.isFunction($.fn.dxChart))
+							return;
+							
+						var dataSource = [
+							{ day: "Mon", occ: .83, book: .9},
+							{ day: "Tue", occ: .24, book: .85},
+							{ day: "Wed", occ: .1, book: .72},
+							{ day: "Fri", occ: .76, book: .65},
+							{ day: "Sat", occ: .39, book: .12},
+							{ day: "Sun", occ: .15, book: .0}
+						];
+						
+						$("#bar-2").dxChart({
+							equalBarWidth: false,
+							dataSource: dataSource,
+							commonSeriesSettings: {
+								argumentField: "day",
+								type: "bar"
+							},
+							series: [
+								{ valueField: "occ", name: "Occupied", color: "#0e62c7" },
+								{
+									axis: "Room Booked",
+									type: "spline",
+									valueField: "book",
+									name: "Room Booked",
+									color: "#8dc63f"
+								}
+								//{ valueField: "book", name: "Room Booked", color: "#8dc63f" }
+							],
+							legend: {
+								verticalAlignment: "bottom",
+								horizontalAlignment: "center"
+							},
+							valueAxis:[
+								{
+									label: {
+										format: "percent"
+										}
+								},
+								{
+									name: "Room Booked",
+									label: {
+										visible: false
+									}
+								}
+							],
+							tooltip: {
+								enabled: true,
+								shared: true,
+								format: {
+									type: "percent",
+                					precision: 1
+								},
+								customizeTooltip: function (arg) {
+									var items = arg.valueText.split("\n"),
+										color = arg.point.getColor();
+									$.each(items, function(index, item) {
+										if(item.indexOf(arg.seriesName) === 0) {
+											items[index] = $("<b>")
+															.text(item)
+															.css("color", color)
+															.prop("outerHTML");
+										}
+									});
+									return { text: items.join("\n") };
+								}
+							}
+						});
+					});
+				</script>
+				<div id="bar-2" style="height: 400px; width: 100%;"></div>
+			</div>
+		</div>
+		
+	</div>
+	
+</div>
+<script>
+	socket_current.emit('test', { my: 'data' });
+</script>
+

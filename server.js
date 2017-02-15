@@ -4,6 +4,7 @@ var server = require("http").Server(app);
 var io = require("socket.io")(server);
 var iotf = require('ibmiotf');
 var db = require("./routes/db.js");
+var bodyParser = require('body-parser');
 var appConfig;
 
 // cfenv provides access to your Cloud Foundry environment
@@ -57,12 +58,12 @@ server.listen(serverPort, serverHost, function() {
         //                  ":" + deviceId + "; event = "+ eventType +", payload = " + payload);
 
                         
-        if(deviceId == "ESP8266_Device01"){
+        if(deviceId == "EMSgateway"){
             
             try{
                 sensorObj = JSON.parse(payload);
                 io.emit("sensorObj", sensorObj);
-                //console.log(sensorObj);
+                console.log(sensorObj);
                 
             } catch(err){
                 console.log(err);
@@ -89,11 +90,11 @@ server.listen(serverPort, serverHost, function() {
 
 //transfer one time
 io.on("connection", function (socket) {
-   
+   /*
     db.HomeWeatherQuery(24, function(result){
         socket.emit("sensorObj_array", result); 
     });
-
+    */
     socket.on('test', function (data) {  
     console.log(data);
     });
@@ -103,5 +104,15 @@ io.on("connection", function (socket) {
 io.on("connection", function () {
 
 });
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json()); // Body parser use JSON data
+
+app.get('/test',function(req,res){
+    var data = [{"Data":"1"},{"Data":"2"}];
+    
+    res.send(data);
+});
+
 
 

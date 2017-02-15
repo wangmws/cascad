@@ -28664,7 +28664,7 @@ var ngCloakDirective = ngDirective({
  *      .controller('SettingsController1', SettingsController1);
  *
  *    function SettingsController1() {
- *      this.name = "Shawn Wang";
+ *      this.name = "Cascademic";
  *      this.contacts = [
  *        {type: 'phone', value: '408 555 1212'},
  *        {type: 'email', value: 'john.smith@example.org'} ];

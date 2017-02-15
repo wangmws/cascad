@@ -97,8 +97,9 @@ angular.module('xenon.services', []).
 			var menu_lvls  	 = this.addItem('Menu Levels', 		'', 						'linecons-cloud');
 			*/
 				// Subitems of IOT Dashboard
-				iot.addItem('Room Sensor', 	'-/dashboard-room'); // "-/" will append parents link
-				iot.addItem('ModCam', 	'-/dashboard-modcam'); // "-/" will append parents link
+				//iot.addItem('Room Sensor', 	'-/dashboard-room'); // "-/" will append parents link
+				//iot.addItem('ModCam', 	'-/dashboard-modcam'); // "-/" will append parents link
+				iot.addItem('Cascademic', 	'-/dashboard-cas'); // "-/" will append parents link
 
 				/*
 				// Subitems of Dashboard

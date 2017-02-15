@@ -11,7 +11,8 @@
     "cfenv": "1.0.x",
     "socket.io": "^1.7.2",
     "canvas-gauges": "2.x.x",
-    "ibm_db": "0.0.19"
+    "ibm_db": "0.0.19",
+    "body-parser":"1.x.x"
   },
   "scripts": {
     "start": "node server.js"
