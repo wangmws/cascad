@@ -11,14 +11,14 @@
     "cfenv": "1.0.x",
     "socket.io": "^1.7.2",
     "canvas-gauges": "2.x.x",
-    "ibm_db": "0.0.19",
-    "body-parser":"1.x.x"
+    "ibm_db": "1.x.x",
+    "body-parser": "1.x.x"
   },
   "scripts": {
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wangmws/Dashboard-IOT-1483458962301.git"
+    "url": "https://github.com/wangmws/cascad.git"
   }
 }

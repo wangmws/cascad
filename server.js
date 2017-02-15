@@ -39,7 +39,7 @@ app.use('/scripts', express.static(__dirname + '/node_modules/'));
 var appClient = new iotf.IotfApplication(appConfig);
 console.log(appConfig);
 
-var sensorObj = {};
+var kW_TOTAL_array = new Array();
 
 
 var recordCounter = 0;
@@ -63,25 +63,24 @@ server.listen(serverPort, serverHost, function() {
             try{
                 sensorObj = JSON.parse(payload);
                 io.emit("sensorObj", sensorObj);
-                console.log(sensorObj);
+                //console.log(sensorObj);
+
+                if(!(sensorObj.d.kW_TOTAL === undefined))
+                {
+                    if(kW_TOTAL_array.length < 100){
+                        kW_TOTAL_array.push({"Timestamp":timestamp_current = sensorObj.d.Timestamp.slice(11,19), "value1": sensorObj.d.kW_TOTAL});
+                    } else {
+                        kW_TOTAL_array.shift();
+                    }
+                    console.log(kW_TOTAL_array);
+                
+                }
+
                 
             } catch(err){
                 console.log(err);
             }
  
-            
-
-            /*
-            var roomSensor = {};
-            roomSensor.humid = sensorObj.d.Humidity;
-            roomSensor.Light = sensorObj.d.Light;
-            roomSensor.Motion = sensorObj.d.Motion;
-            roomSensor.Temperature = sensorObj.d.Temperature;
-            roomSensor.Timestamp = sensorObj.ts;
-            //roomSensor
-            console.log(roomSensor.humid);
-            console.log(roomSensor.Temperature);
-            */
 
         }
     });
@@ -90,13 +89,12 @@ server.listen(serverPort, serverHost, function() {
 
 //transfer one time
 io.on("connection", function (socket) {
-   /*
-    db.HomeWeatherQuery(24, function(result){
-        socket.emit("sensorObj_array", result); 
-    });
-    */
+   
+    socket.emit("sensorObj_array", kW_TOTAL_array); 
+    console.log(kW_TOTAL_array);
+    
     socket.on('test', function (data) {  
-    console.log(data);
+        console.log(data);
     });
 });
 
@@ -108,10 +106,23 @@ io.on("connection", function () {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); // Body parser use JSON data
 
-app.get('/test',function(req,res){
+app.get('/realkw',function(req,res){
+    var results = [];
+    console.log("here");
+    try{
+            db.KwRealTimeQuery(function(data){
+                console.log(data);
+                res.send(data);
+            });
+        
+    } catch (err) {
+        console.log(err);
+    }
+
+    
     var data = [{"Data":"1"},{"Data":"2"}];
     
-    res.send(data);
+    //res.send(results);
 });
 
 
