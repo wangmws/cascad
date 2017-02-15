@@ -1,0 +1,23 @@
+{
+  "name": "cascad",
+  "description": "",
+  "version": "1.0.0",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "~4.x",
+    "ibmiotf": "^0.2.29",
+    "cfenv": "1.0.x",
+    "socket.io": "^1.7.2",
+    "canvas-gauges": "2.x.x",
+    "ibm_db": "0.0.19"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wangmws/Dashboard-IOT-1483458962301.git"
+  }
+}

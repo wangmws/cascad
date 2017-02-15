@@ -1,0 +1,576 @@
+<page-title ng-if="layoutOptions.pageTitles" title="ModCam" description=""></page-title>
+<div class="dx-warning hidden">
+	<div>
+		<h2>How to Include Charts Library in Xenon Theme</h2>
+
+		<p>The reason why you don't see charts like in the Xenon demo website is because of license restrictions from DevExpress company. <a href="http://js.devexpress.com/DevExtremeWeb/?folder=EULAs" target="_blank">Click here</a> to read license agreement.</p>
+		<p>Even that we have purchased the developer license we are not permitted to include the DevExtreme Web Charts JavaScript library in the default download file of Xenon theme, however you can include DevExpress Charts library manually and takes just few minutes:</p>
+
+		<ol>
+			<li>Download <strong>DevExtreme Web</strong> JavaScript library by clicking <a href="https://go.devexpress.com/DevExpressDownload_DevExtremeWebTrial.aspx" class="text-bold">here</a>. If the link doesn't work, then <a href="http://js.devexpress.com/Buy/" target="_parent"><strong>click this one</strong></a> and choose DevExtreme Web package to download.</li>
+			<li>Extract the downloaded archive. There you will find <strong>Lib/</strong> folder. <strong>Copy</strong> the folders inside.</li>
+			<li><strong>Paste</strong> copied files to <strong>assets/js/devexpress-web-14.1/</strong></li>
+			<li>You are all set! Charts will look the same just like in the demo website.</li>
+		</ol>
+	</div>
+</div>
+<script type="text/javascript">
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			$(".dx-warning").removeClass('hidden');
+	});
+</script>
+
+<script type="text/javascript">
+	var current_date_input = formattedDateDb(new Date())
+	var current_start_hour = 0, current_end_hour = 23;
+	//console.log("new date :" + date_input)
+	
+	var all_modcam_data_sources = [];
+	
+	function updateRangeSource(idate){
+		console.log("incoming date " + idate);
+		var datasource_f_range = new Array();
+		var datasource_m_range = new Array();
+		//get female datasource
+
+		
+		$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/querysexfcount',{date : idate}).done(function(data){
+			if(!Array.isArray(data))
+					data = [data];
+
+			datasource_f_range = datasource_modcam_range(idate, data, "f");
+			
+			//get male datasource
+			$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/querysexmcount',{date : idate}).done(function(data){
+				
+				if(!Array.isArray(data))
+					data = [data];
+
+				datasource_m_range = datasource_modcam_range(idate, data, "m");
+					//$("#range-chart").dxRangeSelector('instance').option('dataSource', datasource_f_range);
+				
+
+				all_modcam_data_sources = [];
+				$.map(datasource_f_range, function(arg, i)
+				{
+					all_modcam_data_sources.push({
+						time: 			arg.time,
+						Female: 		datasource_f_range[i].Female,
+						Male: 			datasource_m_range[i].Male
+					});
+				});
+
+				/*
+				console.log(datasource_f_range);
+				console.log(datasource_m_range);
+				*/
+				//console.log(all_modcam_data_sources);
+				
+				$("#modcam-range-chart").dxRangeSelector('instance').option('dataSource', all_modcam_data_sources);
+
+			});
+
+		});
+	};
+
+	
+	
+	
+</script>
+
+<script type="text/javascript">
+		/*
+		// Let us open a web socket
+		if ("WebSocket" in window)
+            {
+               //alert("WebSocket is supported by your Browser!");
+               var ws = new WebSocket("wss://iotwmw.mybluemix.net/ws/modcam	");
+				
+               ws.onopen = function()
+               {
+                  // Web Socket is connected, send data using send()
+                  ws.send("Message to send");
+                  console.log("Message is sent...");
+               };
+				
+               ws.onmessage = function (evt) 
+               { 
+                  var received_msg = evt.data;
+                  console.log(received_msg);
+               };
+				
+               ws.onclose = function()
+               { 
+                  // websocket is closed.
+                  console.log("Connection is closed..."); 
+               };
+			} else
+            {
+               // The browser doesn't support WebSocket
+               //alert("WebSocket NOT supported by your Browser!");
+            }
+			*/
+
+		setTimeout(function()
+		{	
+		var $ = jQuery;		
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+		
+		// Range Filter
+		$("#modcam-range-chart").dxRangeSelector({
+			//dataSource: all_data_sources,
+			size: {
+				height: 250
+			},
+			chart: {
+				series: [
+					{ argumentField: "time", valueField: "Female", color: "#cc3f44", opacity: .65 },
+					{ argumentField: "time", valueField: "Male", color: "#0e62c7", opacity: .65 }				
+				],
+				valueAxis: {
+					valueType: "numeric"
+				}
+			},
+			/*
+			selectedRange: {
+				//startValue: all_data_sources[4].time,
+				//endValue: all_data_sources[14].time
+			},
+			*/
+			loadingIndicator: {
+				show: true,
+				text: "Loading..."
+			},
+			selectedRangeChanged: function(e)
+			{
+				
+				//var filter = {
+				//	reqsPerMinuteData: []
+				//};
+				console.log(e);
+				current_start_hour = e.startValue.getHours();
+				current_end_hour = e.endValue.getHours();
+				updateAgeChart(current_date_input, e.startValue.getHours(), e.endValue.getHours())
+				updateMoodChart(current_date_input,e.startValue.getHours(), e.endValue.getHours());
+				updateGlassesChart(current_date_input,e.startValue.getHours(), e.endValue.getHours());
+				udpateUserAddWidget(current_date_input,e.startValue.getHours(), e.endValue.getHours());
+				/*
+				$.map(all_data_sources, function(arg, i)
+				{
+					
+					/*
+					if(date("U", e.startValue) <= date("U", arg.time) && date("U", e.endValue) >= date("U", arg.time))
+					{
+						filter.reqsPerMinuteData.push({
+							time: arg.time,
+							reqs: arg.requestsPerMinute
+						});
+					}
+				});
+				*/
+				
+				//$('#reqs-per-second-chart').dxChart('instance').option('dataSource', filter.reqsPerMinuteData);
+				
+			},
+			legend: {
+				position: 'inside',
+				paddingLeftRight: 5
+			},
+		});
+
+		updateRangeSource(current_date_input);
+		udpateUserAddWidget(current_date_input, current_start_hour, current_end_hour);
+		
+		
+		// Resize charts
+		$(window).on('xenon.resize', function()
+		{
+			$("#modcam-range-chart").data("dxRangeSelector").render();
+			$("#age-bar").data("dxChart").render();
+			$("#bubble-mood-chart").render();
+			
+		});
+	});
+
+	setInterval(function(){ udpateUserAddWidget(current_date_input, current_start_hour, current_end_hour); }, 60000);
+
+	function udpateUserAddWidget(idate, istartHour, iendHour){
+			//daily-added total-added queryusercountselection queryusercounttotal
+			
+			$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/queryusercountselection',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+				try{
+					jQuery("#daily-added")[0].innerText = data.ALLTOTAL  + " People";
+				} 
+				catch(err)
+				{
+					console.log(err);
+				}
+				
+				
+			});
+
+			$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/queryusercounttotal',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+				try{
+					jQuery("#total-added")[0].innerText = data.ALLTOTAL + " People";
+				} 
+				catch(err)
+				{
+					console.log(err);
+				}
+				
+				
+			});
+		}
+</script>
+
+<div class="row">
+	<div class="col-sm-9">
+<div class="panel panel-default">
+	<div class="panel-heading">
+		Time Range and Date Selector
+	</div>
+	<div class="panel-body">
+		
+			<div class="col-sm-9">
+				<div id="modcam-range-chart" ></div>
+			</div>
+			<div class="col-sm-3">
+				<div id="datepicker"></div>
+			</div>
+			
+		</div>
+		
+	</div>
+	</div>
+	<div class="col-sm-3">
+	
+		<div class="xe-widget xe-counter-block xe-counter-block-blue">
+			<div class="xe-upper">
+				
+				<div class="xe-icon">
+					<i class="linecons-user"></i>
+				</div>
+				<div class="xe-label">
+					<strong class="num" id="daily-added">-- People</strong>
+					<span>Added (Base on currently selection)</span>
+				</div>
+				
+			</div>
+			<div class="xe-lower">
+				<div class="border"></div>
+				
+				<span>Total Added To Date</span>
+				<strong id="total-added">-- People</strong>
+			</div>
+		</div>
+
+		<div class="xe-widget xe-counter xe-counter-green" xe-counter data-count=".num" data-from="0" data-to="26" data-duration="2" data-easing="false">
+			<div class="xe-icon">
+				<i class="linecons-user"></i>
+			</div>
+			<div class="xe-label">
+				<strong class="num">1k</strong>
+				<span>Average Age</span>
+			</div>
+		</div>
+
+		<div class="xe-widget xe-counter xe-counter-red" xe-counter data-count=".num" data-from="0" data-to="3.09" data-duration="2" data-easing="false">
+			<div class="xe-icon">
+				<i class="linecons-heart"></i>
+			</div>
+			<div class="xe-label">
+				<strong class="num"></strong>
+				<span>Average Mood</span>
+			</div>
+		</div>
+		
+	</div>
+</div>
+
+
+<script type="text/javascript">
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+			
+		$("#age-bar").dxChart({
+			equalBarWidth: true,
+			commonSeriesSettings: {
+				argumentField: "range",
+				type: "bar",
+				hoverMode: "allArgumentPoints",
+				selectionMode: "allArgumentPoints",
+				label: {
+					visible: true,
+					showForZeroValues: false,
+					format: {
+						type: "fixedPoint",
+						precision: 1
+					}
+				}
+			},
+			series: [
+				{ valueField: "male", name: "Male", color: "#0e62c7" },
+				{ valueField: "female", name: "Female", color: "#cc3f44" }
+			],
+			legend: {
+				verticalAlignment: "bottom",
+				horizontalAlignment: "center"
+			},
+		});
+
+
+		updateAgeChart(current_date_input,0,23);
+
+		
+	});
+
+	function updateAgeChart(idate,istartHour,iendHour){
+		$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/queryagecount',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+			//console.log("debug");
+			//console.log(istartHour);
+			//console.log(iendHour);
+			//console.log(processAgeChartDbDataSource(data));
+			$('#age-bar').dxChart('instance').option('dataSource', processAgeChartDbDataSource(data))
+		});	
+	};
+	
+	
+</script>
+
+<div class="row">
+	<div class="col-sm-12">
+	
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Age Chart</h3>
+				<div class="panel-options">
+					<a href="" data-toggle="panel">
+						<span class="collapse-icon">&ndash;</span>
+						<span class="expand-icon">+</span>
+					</a>
+					<a href="" data-toggle="remove">
+						&times;
+					</a>
+				</div>
+			</div>
+			<div class="panel-body">	
+				<div id="age-bar" style="height: 440px; width: 100%;"></div>
+			</div>
+		</div>
+			
+	</div>
+</div>
+
+<script type="text/javascript">
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+			
+		$("#bubble-mood-chart").dxChart({
+			//dataSource: dataSource,
+			commonSeriesSettings: {
+				type: 'bubble'
+			},
+			//title: 'Correlation between total population, population over 60 <br/>and % of population over 60',
+			tooltip: {
+				enabled: true,
+				customizeText: function () { return 'Gender: ' + this.point.tag.toUpperCase() + '<br/>Age Range: ' + this.argumentText + ' Years <br/>Mood: ' + this.valueText + ' <br/>% of this segement: ' + parseInt(this.size * 100) + '%'; }
+			},
+			argumentAxis: {
+				/*
+				label: {
+					customizeText: function () {
+						return this.value + 'M';
+					}
+				},*/
+				title: 'Age Range'
+			},
+			valueAxis: {
+				/*
+				label: {
+					customizeText: function () {
+						return this.value + 'M';
+					}
+				},*/
+				min: 1,
+				max: 5,
+				title: 'Mood'
+			},
+			legend: {
+				position: 'inside',
+				horizontalAlignment: 'right',
+				border: {
+					visible: true
+				}
+			},
+			palette: ["#00ced1", "#008000", "#ffd700", "#ff7f50"],
+			seriesClick: function(series) {
+				series.isVisible() ? series.hide() : series.show(); 
+			},
+			series: [{
+				name: 'Male',
+				argumentField: 'malerange',
+				valueField: 'malemood',
+				sizeField: 'maleperc',
+				tagField:'maletag',
+				color: '#0e62c7'
+			}, {
+				name: 'Female',
+				argumentField: 'femalerange',
+				valueField: 'femalemood',
+				sizeField: 'femaleperc',
+				tagField: 'femaletag',
+				color: '#cc3f44'
+			},]
+		});
+
+		updateMoodChart(current_date_input,0,23);
+	});
+
+	function updateMoodChart(idate,istartHour,iendHour){
+		$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/querymoodcount',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+			//console.log(istartHour);
+			//console.log(iendHour);
+			//console.log(processMoodChartDbDataSource(data));
+			$('#bubble-mood-chart').dxChart('instance').option('dataSource', processMoodChartDbDataSource(data));
+		});	
+	};
+</script>
+
+<div class="row">
+	<div class="col-sm-6">
+	
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Correlation between Mood, Age and Gender </h3>
+				<div class="panel-options">
+					<a href="" data-toggle="panel">
+						<span class="collapse-icon">&ndash;</span>
+						<span class="expand-icon">+</span>
+					</a>
+					<a href="" data-toggle="remove">
+						&times;
+					</a>
+				</div>
+			</div>
+			<div class="panel-body">	
+				
+				<div id="bubble-mood-chart" style="height: 450px; width: 100%;"></div>
+			</div>
+		</div>
+			
+	</div>
+
+	<div class="col-sm-6">
+	
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Glasses</h3>
+				<div class="panel-options">
+					<a href="" data-toggle="panel">
+						<span class="collapse-icon">&ndash;</span>
+						<span class="expand-icon">+</span>
+					</a>
+					<a href="" data-toggle="remove">
+						&times;
+					</a>
+				</div>
+			</div>
+			<div class="panel-body">	
+				
+				<div id="glass-chart" style="height: 450px; width: 100%;"></div>
+			</div>
+		</div>
+			
+	</div>
+</div>
+<script type="text/javascript">
+	var xenonPalette = ['#fcd036','#68b828','#4fcdfc','#00b19d','#ff6264','#f7aa47'];
+
+	jQuery(document).ready(function($)
+	{
+		if( ! $.isFunction($.fn.dxChart))
+			return;
+			
+		
+		$("#glass-chart").dxPieChart({
+			//dataSource: dataSource,
+			//title: "The Population of Continents and Regions",
+			tooltip: {
+				enabled: false,
+				customizeText: function() { 
+					return this.argumentText + " :<br/>" + this.valueText;
+				}
+			},
+			size: {
+				height: 420
+			},
+			pointClick: function(point) {
+				point.showTooltip();
+				clearTimeout(timer);
+				timer = setTimeout(function() { point.hideTooltip(); }, 2000);
+				$("select option:contains(" + point.argument + ")").prop("selected", true);
+			},
+			legend: {
+				visible: false
+			},  
+			series: [{
+				type: "doughnut",
+				argumentField: "type",
+				label: {
+					visible: true,
+					customizeText: function (point) {
+						return point.argumentText + ": " + point.valueText ;
+					},
+					connector: {
+						visible: true
+					}
+				}
+			}],
+			palette: xenonPalette
+		});
+		
+		updateGlassesChart(current_date_input,0,23);
+	});
+
+	function updateGlassesChart(idate,istartHour,iendHour){
+		$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/queryglassescount',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+			//console.log(istartHour);
+			//console.log(iendHour);
+			console.log(processGlassesDbDataSource(data));
+			$('#glass-chart').dxPieChart('instance').option('dataSource', processGlassesDbDataSource(data));
+		});	
+	};
+</script>
+<div class="row">
+	
+</div>
+
+
+
+<script>
+	$("#datepicker").datepicker()
+		.on("change", function (e) {
+			//alert($(this).val());
+			current_start_hour = 0;
+			current_end_hour = 23;
+			
+			current_date_input = formattedDateRangetoDb($(this).val());
+			$('#modcam-range-chart').dxRangeSelector('instance').option('selectedRange',undefined);
+			updateRangeSource(current_date_input);
+			updateAgeChart(current_date_input, current_start_hour, current_end_hour);
+			updateMoodChart(current_date_input,current_start_hour, current_end_hour);
+			updateGlassesChart(current_date_input,current_start_hour, current_end_hour);
+			udpateUserAddWidget(current_date_input,current_start_hour, current_end_hour);
+			
+		});
+</script>
+ 
+</body>
+

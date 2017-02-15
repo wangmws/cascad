@@ -1,0 +1,12 @@
+---
+
+applications:
+
+- name : cascad
+  instances : 1
+  memory : 256M
+  
+services:
+- Internet of Things Platform-y4
+- Dashdb_IOTWMW
+
