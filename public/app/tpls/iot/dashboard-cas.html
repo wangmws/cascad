@@ -180,20 +180,20 @@
 		
 		
 		
-		setInterval(function(){ KW_TOTALGaugeUpdate(); }, 2000);
-		setInterval(function(){ PFGaugeUpdate(); }, 2000);
-		setInterval(function(){ freqGaugeUpdate(); }, 2000);
-		setInterval(function(){ AvgCurrentGaugeUpdate(); }, 2000);
-		setInterval(function(){ AvglinevoltGaugeUpdate(); }, 2000);
-		setInterval(function(){ AvglinevoltGaugeUpdate(); }, 2000);
-		setInterval(function(){ KW_TOTALChartUpdate(); }, 2000);
+		setInterval(function(){ KW_TOTALGaugeUpdate(); }, 3000);
+		setInterval(function(){ PFGaugeUpdate(); }, 3000);
+		setInterval(function(){ freqGaugeUpdate(); }, 3000);
+		setInterval(function(){ AvgCurrentGaugeUpdate(); }, 3000);
+		setInterval(function(){ AvglinevoltGaugeUpdate(); }, 3000);
+		setInterval(function(){ AvglinevoltGaugeUpdate(); }, 3000);
+		setInterval(function(){ KW_TOTALChartUpdate(); }, 10000);
 		
 
 
 		function KW_TOTALChartUpdate(){
 			var chart_data = $("#bar-3").dxChart('instance').option('dataSource');
 			if(Array.isArray(chart_data)){
-				if(chart_data.length < 100){
+				if(chart_data.length < 50){
 					chart_data.push({"Timestamp": timestamp_current , "value1": kW_TOTAL_current});
 				} else {
 					chart_data.shift();
@@ -391,7 +391,7 @@
 	<div class="col-sm-6">
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				Real Time KW Total Chart
+				Real Time KW Total
 			</div>
 			<div class="panel-body">	
 				<div id="bar-3" style="height: 400px; width: 80%;"></div>
@@ -403,10 +403,83 @@
 
 
 <div class="row">
-	<div class="col-sm-12">
+	<div class="col-sm-3">
 		<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Monthly KW Total Chart</h3>
+					<h3 class="panel-title">Daily KW Total</h3>
+					<div class="panel-options">
+						<a href="" data-toggle="panel">
+							<span class="collapse-icon">&ndash;</span>
+							<span class="expand-icon">+</span>
+						</a>
+						<a href="" data-toggle="remove">
+							&times;
+						</a>
+					</div>
+				</div>
+				<div class="panel-body">	
+				<script type="text/javascript">
+					jQuery(document).ready(function($)
+					{
+						if( ! $.isFunction($.fn.dxChart))
+							return;
+							
+						//var dataSource = [{"VALUE1":"25704","DATE":"2017-01-14"},{"VALUE1":"53163","DATE":"2017-01-15"},{"VALUE1":"2693","DATE":"2017-01-16"}];
+						
+						
+						$("#bar-1").dxChart({
+							equalBarWidth: false,
+							//dataSource: dataSource,
+							commonSeriesSettings: {
+								argumentField: "DATE",
+								type: "bar"
+							},
+							series: [
+								{ valueField: "VALUE1", name: "KW Total", color: "#0e62c7" }
+							],
+							argumentAxis:{
+								grid:{
+									visible: true
+								}
+							},
+							tooltip:{
+								enabled: true
+							},
+							legend: {
+								verticalAlignment: "bottom",
+								horizontalAlignment: "center"
+							},
+							commonPaneSettings: {
+								border:{
+									visible: true,
+									right: false
+								}	   
+							}
+						});
+						
+						updateKwDayChart();
+						setInterval(function(){ updateKwDayChart(); }, 2000);
+						
+					});
+
+					function updateKwDayChart(){
+							//$.get('https://cors-anywhere.herokuapp.com/https://iotwmw.mybluemix.net/queryglassescount',{date : idate, startTime: istartHour, endTime: iendHour}).done(function(data){
+							$.get(window.location.origin + '/daykw',"").done(function(data){
+								//console.log(istartHour);
+								//console.log(iendHour);
+								console.log(data);
+								$('#bar-1').dxChart('instance').option('dataSource', processKwDayDbDataSource(data));
+							});	
+						};
+				</script>
+				<div id="bar-1" style="height: 400px; width: 92%;"></div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-9">
+		<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Monthly KW Total</h3>
 					<div class="panel-options">
 						<a href="" data-toggle="panel">
 							<span class="collapse-icon">&ndash;</span>

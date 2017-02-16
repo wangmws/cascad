@@ -67,7 +67,7 @@ server.listen(serverPort, serverHost, function() {
 
                 if(!(sensorObj.d.kW_TOTAL === undefined))
                 {
-                    if(kW_TOTAL_array.length < 100){
+                    if(kW_TOTAL_array.length < 50){
                         kW_TOTAL_array.push({"Timestamp":timestamp_current = sensorObj.d.Timestamp.slice(11,19), "value1": sensorObj.d.kW_TOTAL});
                     } else {
                         kW_TOTAL_array.shift();
@@ -119,10 +119,21 @@ app.get('/realkw',function(req,res){
         console.log(err);
     }
 
-    
-    var data = [{"Data":"1"},{"Data":"2"}];
-    
-    //res.send(results);
+});
+
+app.get('/daykw',function(req,res){
+    var results = [];
+    console.log("here");
+    try{
+            db.KwDayQuery(function(data){
+                console.log(data);
+                res.send(data);
+            });
+        
+    } catch (err) {
+        console.log(err);
+    }
+
 });
 
 

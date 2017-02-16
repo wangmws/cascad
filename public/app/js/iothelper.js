@@ -385,6 +385,26 @@ function processGlassesDbDataSource(array){
     return glassesChart_array;
 }
 
+function processKwDayDbDataSource(array){
+    
+    var KwDayChart_array = new Array();
+    var icount = 0;
+  
+    
+    try{
+        for(icount = 0;icount < array.length;icount++){
+            KwDayChart_array.push({DATE: array[icount].DATE, VALUE1: parseInt(array[icount].VALUE1)})
+        }
+    }
+    catch(err){
+        console.log(err);
+    }
+        
+    
+    console.log(KwDayChart_array);
+    return KwDayChart_array;
+}
+
 /*
 function emptydatasource_modcam_range(date, sex)
 {
