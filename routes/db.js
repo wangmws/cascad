@@ -100,7 +100,7 @@ module.exports = {
 
         ibmdb.open(connString,function (err,conn) {
             if (err) return console.log(err);
-            conn.query('select sum(PAYLOAD_D_KW_TOTAL) as VALUE1, cast(PAYLOAD_D_TIMESTAMP as date) AS DATE from energymeter where cast(PAYLOAD_D_TIMESTAMP as date) >= CURRENT_DATE - 100 DAY group by cast(PAYLOAD_D_TIMESTAMP as date) order by cast(PAYLOAD_D_TIMESTAMP as date) ASC ', function (err, data) {
+            conn.query('select sum(PAYLOAD_D_KW_TOTAL) as VALUE1, cast(PAYLOAD_D_TIMESTAMP as date) AS DATE from energymeter where cast(PAYLOAD_D_TIMESTAMP as date) >= CURRENT_DATE - 7 DAY group by cast(PAYLOAD_D_TIMESTAMP as date) order by cast(PAYLOAD_D_TIMESTAMP as date) ASC ', function (err, data) {
                 if (err) {
                     console.log(err);
                     return callback(err);
